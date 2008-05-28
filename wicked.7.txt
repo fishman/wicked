@@ -1,0 +1,126 @@
+wicked(7)
+=========
+
+NAME
+----
+
+wicked - a lua library for dynamic widgets in awesome
+
+SYNOPSIS
+--------
+
+None
+
+DESCRIPTION
+-----------
+
++wicked+ is a library, written in lua, for easy creation and management of dynamic awesome statusbar widgets, from the .awesomerc.lua configuration file.
+
+USAGE
+-----
+
+To use wicked, put *require("wicked")* at the top of your .awesomerc.lua, from then on, create your widgets as normal and call *wicked.register()* to register them to wicked.
+
+'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *field*)'
+
+*widget*
+
+Use the widget created by widget.new for this argument.
+
+*widget_type*
+
+Enter one of the possible widget types here, see the _WIDGET TYPES_ section.
+
+*format*
+
+Format can be either a string argument where $1,$2,$3,etc. will be replaced by their respective values, or a function called with the arguments *(widget, arguments)*, arguments being a table of the values otherwise inserted into the string, if it is a function, its return value will be used to populate the widget. Note that some widget types might not need or use this parameter.
+
+*update_interval*
+
+The amount of seconds it waits between updating this widget, defaults to 1.
+
+*field*
+
+The name of the field to put the final value into, defaults to *\'text'*.
+
+WIDGET TYPES
+------------
+
+'date'
+
+The date widget type uses the output of the \`date` command to populate the widget, if format is given, it will be passed as the FORMAT argument to \`date`.
+
+
+'cpu'
+
+The cpu widget type outputs the current cpu usage in percentages, calculated over the duration of it's update_interval. Use $1 inside the format string to display the percentage.
+
+
+'mem'
+
+The memory widget type outputs four things, $1 will be replaced with the current memory usage in percentages, $2 will be replaced with the total used memory in Mb, $3 with the total amount memory available to the system, and $4 with the amount of free memory.
+
+
+'mpd'
+
+The mpd widget type outputs the song currently playing on the music player daemon, note that the \`mpc` application needs to be installed and configured in order to use this.
+
+
+'fs'
+
+The fs widget type can display size and usage information about currently mounted filesystems, use ${mountpoint datatype} inside the format string to display that data, e.g. ${/ avail} displays the free space on the partition mounted on /. Available datatypes are \'used', \'size', \'usep' (Usage in %) and \'avail'.
+
+
+'function'
+
+Use the function type to define your own custom widget, pass a function as the \`format` argument and it will be called at the specified interval, the function's return value is used to populate the widget.
+
+
+USAGE EXAMPLES
+--------------
+
+Put these snippets into .awesomerc.lua to see what they do, don't forget to add the widgets to your statusbar with statusbar:widget_add().
+
+**A simple \'Now Playing' widget:**
+
+--------------------------------------
+mpdwidget = widget.new({
+    type = 'textbox',
+    name = 'mpdwidget'
+})
+
+wicked.register(mpdwidget, 'mpd',
+    ' <span color="white">Now Playing:</span> $1')
+--------------------------------------
+
+**A memory usage monitor:**
+
+--------------------------------------
+memwidget = widget.new({
+    type = 'textbox',
+    name = 'memwidget'
+})
+
+wicked.register(memwidget, 'mem',
+    ' <span color="white">Memory:</span> $1 ($2Mb/$3Mb)')
+---------------------------------------
+
+**A filesystem usage indicator:**
+
+---------------------------------------
+fswidget = widget.new({
+    type = 'textbox',
+    name = 'fswidget'
+})
+
+wicked.register(fswidget, 'fs',
+    ' <span color="white">FS:</span> ${/ used}/${/ size} (${/ usep} used)', 120)
+---------------------------------------
+
+SEE ALSO
+--------
+awesome(1) awesomerc(5) 
+
+AUTHORS
+-------
+Lucas de Vries <lucasdevries@gmail.com>
