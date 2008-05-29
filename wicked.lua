@@ -356,6 +356,11 @@ function get_net(info)
 end
 
 function bytes_to_string(bytes, sec)
+    if bytes == nil then
+        return ''
+    end
+
+    bytes = tonumber(bytes)
     signs = {}
     signs[1] = 'b'
     signs[2] = 'KiB'
