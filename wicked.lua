@@ -379,9 +379,9 @@ function bytes_to_string(bytes, sec)
     bytes = math.floor(bytes)/10
 
     if sec then
-        return bytes..signs[sign]
+        return tostring(bytes)..signs[sign]
     else
-        return bytes..signs[sign]..'ps'
+        return tostring(bytes)..signs[sign]..'ps'
     end
 end
 
