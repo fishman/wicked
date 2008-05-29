@@ -361,6 +361,11 @@ function bytes_to_string(bytes, sec)
     end
 
     bytes = tonumber(bytes)
+    
+    if bytes == nil then
+        return ''
+    end
+
     signs = {}
     signs[1] = 'b'
     signs[2] = 'KiB'
