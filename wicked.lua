@@ -25,6 +25,7 @@ local mouse = mouse
 local os = os
 local io = io
 local string = string
+local hooks = hooks
 
 -- Init variables
 local widgets = {}
@@ -73,22 +74,7 @@ function start(interval)
         interval = 1
     end
 
-    -- Find out if we're already running a loop
-    local f = io.popen('ps aux | grep wicked.main')
-    running = 0
-
-    for line in f:lines() do
-        if line:find('grep') == nil then
-            running = 1
-        end
-    end
-
-    f:close()
-
-    -- Run the loop by spawning an sh process
-    if running == 0 then
-        awful.spawn('sh -c "while true; do echo \'wicked.main()\' | awesome-client; sleep '..interval..'; done;"')
-    end
+    hooks.timer(interval, main)
 end
 
 function main()
@@ -288,7 +274,7 @@ function get_fs()
             args['{'..vars[6]..' size}'] = vars[2]
             args['{'..vars[6]..' used}'] = vars[3]
             args['{'..vars[6]..' avail}'] = vars[4]
-            args['{'..vars[6]..' usep}'] = vars[5]:gsub('%%','%%%%')
+            args['{'..vars[6]..' usep}'] = vars[5]:gsub('%%','')
         end
     end
 
