@@ -15,6 +15,7 @@ local pairs = pairs
 local print = print
 local type = type
 local tonumber = tonumber
+local tostring = tostring
 local math = math
 local table = table
 local awful = awful
