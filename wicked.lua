@@ -295,6 +295,11 @@ function get_net(info)
             name = line[1]:sub(0,p-1)
             line[1] = line[1]:sub(p+1)
 
+            if tonumber(line[1]) == nil then
+                line[1] = line[2]
+                line[9] = line[10]
+            end
+
             args['{'..name..' rx}'] = bytes_to_string(line[1])
             args['{'..name..' tx}'] = bytes_to_string(line[9])
 
@@ -344,7 +349,6 @@ function get_net(info)
 
                 args['{'..name..' down_gb}'] = down/1024/1024/1024
                 args['{'..name..' up_gb}'] = up/1024/1024/1024
-
             end
 
             nets[name][1] = line[1]
@@ -357,15 +361,11 @@ function get_net(info)
 end
 
 function bytes_to_string(bytes, sec)
-    if bytes == nil then
+    if bytes == nil or tonumber(bytes) == nil then
         return ''
     end
 
     bytes = tonumber(bytes)
-    
-    if bytes == nil then
-        return ''
-    end
 
     signs = {}
     signs[1] = 'b'
