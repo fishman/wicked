@@ -32,6 +32,7 @@ local nextid = 1
 local cpu_total = 0
 local cpu_active = 0
 local Started = 0
+local nets = {}
 
 -- Reset environment
 setfenv(1, P)
@@ -154,6 +155,10 @@ function update(id)
 
     if info['type']:lower() == 'cpu' then
         args = get_cpu()
+    end
+
+    if info['type']:lower() == 'net' then
+        args = get_net(info)
     end
 
     if info['type']:lower() == 'date' then
@@ -289,6 +294,104 @@ function get_fs()
 
     f:close()
     return args
+end
+
+function get_net(info)
+    local f = io.open('/proc/net/dev')
+    args = {}
+
+    for line in f:lines() do
+        line = splitbywhitespace(line)
+
+        local p = line[1]:find(':')
+        if p ~= nil then
+            name = line[1]:sub(0,p-1)
+            line[1] = line[1]:sub(p+1)
+
+            args['{'..name..' rx}'] = bytes_to_string(line[1])
+            args['{'..name..' tx}'] = bytes_to_string(line[9])
+
+            args['{'..name..' rx_b}'] = line[1]
+            args['{'..name..' tx_b}'] = line[9]
+            
+            args['{'..name..' rx_kb}'] = line[1]/1024
+            args['{'..name..' tx_kb}'] = line[9]/1024
+
+            args['{'..name..' rx_mb}'] = line[1]/1024/1024
+            args['{'..name..' tx_mb}'] = line[9]/1024/1024
+
+            args['{'..name..' rx_gb}'] = line[1]/1024/1024/1024
+            args['{'..name..' tx_gb}'] = line[9]/1024/1024/1024
+
+            if nets[name] == nil then 
+                nets[name] = {}
+                args['{'..name..' down}'] = 'n/a'
+                args['{'..name..' up}'] = 'n/a'
+                
+                args['{'..name..' down_b}'] = 0
+                args['{'..name..' up_b}'] = 0
+
+                args['{'..name..' down_kb}'] = 0
+                args['{'..name..' up_kb}'] = 0
+
+                args['{'..name..' down_mb}'] = 0
+                args['{'..name..' up_mb}'] = 0
+
+                args['{'..name..' down_gb}'] = 0
+                args['{'..name..' up_gb}'] = 0
+            else
+                down = (line[1]-nets[name][1])/info['timer']
+                up = (line[9]-nets[name][2])/info['timer']
+
+                args['{'..name..' down}'] = bytes_to_string(down)
+                args['{'..name..' up}'] = bytes_to_string(up)
+
+                args['{'..name..' down_b}'] = down
+                args['{'..name..' up_b}'] = up
+
+                args['{'..name..' down_kb}'] = down/1024
+                args['{'..name..' up_kb}'] = up/1024
+
+                args['{'..name..' down_mb}'] = down/1024/1024
+                args['{'..name..' up_mb}'] = up/1024/1024
+
+                args['{'..name..' down_gb}'] = down/1024/1024/1024
+                args['{'..name..' up_gb}'] = up/1024/1024/1024
+
+            end
+
+            nets[name][1] = line[1]
+            nets[name][2] = line[9]
+        end
+    end
+
+    f:close()
+    return args
+end
+
+function bytes_to_string(bytes, sec)
+    signs = {}
+    signs[1] = 'b'
+    signs[2] = 'KiB'
+    signs[3] = 'MiB'
+    signs[4] = 'GiB'
+    signs[5] = 'TiB'
+
+    sign = 1
+
+    while bytes/1024 > 1 and signs[sign+1] ~= nil do
+        bytes = bytes/1024
+        sign = sign+1
+    end
+
+    bytes = bytes*10
+    bytes = math.floor(bytes)/10
+
+    if sec then
+        return bytes..signs[sign]
+    else
+        return bytes..signs[sign]..'ps'
+    end
 end
 
 -- Build function list

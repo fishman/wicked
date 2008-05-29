@@ -76,6 +76,11 @@ The fs widget type can display size and usage information about currently mounte
 Use the function type to define your own custom widget, pass a function as the \`format` argument and it will be called at the specified interval, the function's return value is used to populate the widget.
 
 
+'net'
+
+The net widget type displays usage information about your networks, in the format string, ${interface type} will be replaced with with that value, possible types are: rx, tx, up, down. You can suffix the type with _b, _kb, _mb or _gb, to display the information in those units. 
+
+
 USAGE EXAMPLES
 --------------
 
@@ -115,6 +120,18 @@ fswidget = widget.new({
 
 wicked.register(fswidget, 'fs',
     ' <span color="white">FS:</span> ${/ used}/${/ size} (${/ usep} used)', 120)
+---------------------------------------
+
+**A network interface monitor (for eth0)**
+
+---------------------------------------
+netwidget = widget.new({
+    type = 'textbox',
+    name = 'netwidget'
+})
+
+wicked.register(netwidget, 'net', 
+    ' <span color="white">NET</span>: ${eth0 down} / ${eth0 up} [ ${eth0 rx} // ${eth0 tx} ]')
 ---------------------------------------
 
 SEE ALSO
