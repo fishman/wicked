@@ -35,6 +35,7 @@ local cpu_total = 0
 local cpu_active = 0
 local Started = 0
 local nets = {}
+local outputCache = {}
 
 -- Reset environment
 setfenv(1, P)
@@ -80,6 +81,8 @@ end
 
 function main()
     -- Run all the widget timers and check if we should update them
+    outputCache = {}
+    
     for id, vals in pairs(widgets) do
         widgets[id]['count'] = widgets[id]['count']+1
 
@@ -88,6 +91,8 @@ function main()
             widgets[id]['count'] = 0
         end
     end
+
+    outputCache = {}
 end
 
 function format(format, widget, args)
@@ -129,23 +134,43 @@ function update(id)
     local func = nil
 
     if info['type']:lower() == 'mem' then
-        args = get_mem()
+        if outputCache['mem'] == nil then
+            outputCache['mem'] = get_mem()
+        end
+
+        args = outputCache['mem']
     end
 
     if info['type']:lower() == 'mpd' then
-        args = get_mpd()
-    end
-    
-    if info['type']:lower() == 'fs' then
-        args = get_fs()
+        if outputCache['mpd'] == nil then
+            outputCache['mpd'] = get_mpd()
+        end
+
+        args = outputCache['mpd']
     end
 
     if info['type']:lower() == 'cpu' then
-        args = get_cpu()
+        if outputCache['cpu'] == nil then
+            outputCache['cpu'] = get_cpu()
+        end
+
+        args = outputCache['cpu']
+    end
+
+    if info['type']:lower() == 'fs' then
+        if outputCache['fs'] == nil then
+            outputCache['fs'] = get_fs()
+        end
+
+        args = outputCache['fs']
     end
 
     if info['type']:lower() == 'net' then
-        args = get_net(info)
+        if outputCache['net'] == nil then
+            outputCache['net'] = get_net()
+        end
+
+        args = outputCache['net']
     end
 
     if info['type']:lower() == 'date' then
