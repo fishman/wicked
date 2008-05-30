@@ -220,11 +220,6 @@ function get_cpu()
     cpu_total = total_new
     cpu_active = active_new
 
-    ---- Check if extra zero is needed
-    if tonumber(usage_percent) < 10 then
-       usage_percent = '0'..usage_percent
-    end
-
     return {usage_percent}
 end
 
@@ -233,6 +228,11 @@ function get_mpd()
     ---- Get data from mpc
     local nowplaying_file = io.popen('mpc')
     local nowplaying = nowplaying_file:read()
+
+    if nowplaying == nil then
+        return {''}
+    end
+
     nowplaying_file:close()
     
     nowplaying = nowplaying:gsub('&', '&amp;')
@@ -257,15 +257,6 @@ function get_mem()
     mem_inuse = mem_usage[3]
     mem_free = mem_usage[4]
     mem_usepercent = math.floor(mem_inuse/mem_total*100)
-
-    ---- Add zeroes
-    if tonumber(mem_usepercent) < 10 then
-        mem_usepercent = '0'..mem_usepercent
-    end
-
-    if tonumber(mem_inuse) < 1000 then
-        mem_inuse = '0'..mem_inuse
-    end
 
     return {mem_usepercent, mem_inuse, mem_total, mem_free}
 end
