@@ -40,6 +40,9 @@ local outputCache = {}
 -- Reset environment
 setfenv(1, P)
 
+-- Set up hook to clear widget cache
+awful.hooks.timer(1, function () outputCache = {} end)
+
 function register(widget, type, format, timer, field)
     -- Register a new widget into wicked
     if timer == nil then
@@ -59,40 +62,12 @@ function register(widget, type, format, timer, field)
         field = field
     }
 
+    -- Add timer
+    local id = nextid
+    awful.hooks.timer(timer, function () update(id) end, true)
+    
     -- Incement ID
     nextid = nextid+1
-
-    -- Check if the wicked main loop has started yet
-    if Started == 0 then
-        -- Start the main loop
-        start()
-        Started = 1
-    end
-end
-
-function start(interval)
-    -- Start the wicked main loop
-    if interval == nil then
-        interval = 1
-    end
-
-    hooks.timer(interval, main)
-end
-
-function main()
-    -- Run all the widget timers and check if we should update them
-    outputCache = {}
-    
-    for id, vals in pairs(widgets) do
-        widgets[id]['count'] = widgets[id]['count']+1
-
-        if widgets[id]['count'] >= widgets[id]['timer'] then
-            update(id)
-            widgets[id]['count'] = 0
-        end
-    end
-
-    outputCache = {}
 end
 
 function format(format, widget, args)
