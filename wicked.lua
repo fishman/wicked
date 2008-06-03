@@ -102,6 +102,14 @@ function splitbywhitespace(str)
     return values
 end
 
+function widget_update(w)
+    for i,p in pairs(widgets) do
+        if p == w then
+            update(i)
+        end
+    end
+end
+
 function update(id)
     -- Update a specific widget
     local info = widgets[id]
@@ -384,4 +392,5 @@ end
 
 -- Build function list
 P.register = register
+P.update = widget_update
 return P
