@@ -64,7 +64,7 @@ function register(widget, type, format, timer, field)
 
     -- Add timer
     local id = nextid
-    awful.hooks.timer(timer, function () update(id) end, true)
+    awful.hooks.timer(timer, function () do_update(id) end, true)
     
     -- Incement ID
     nextid = nextid+1
@@ -105,12 +105,12 @@ end
 function widget_update(w)
     for i,p in pairs(widgets) do
         if p == w then
-            update(i)
+            do_update(i)
         end
     end
 end
 
-function update(id)
+function do_update(id)
     -- Update a specific widget
     local info = widgets[id]
     local args = {}
