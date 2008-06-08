@@ -150,7 +150,7 @@ function do_update(id)
 
     if info['type']:lower() == 'net' then
         if outputCache['net'] == nil then
-            outputCache['net'] = get_net()
+            outputCache['net'] = get_net(info)
         end
 
         args = outputCache['net']
