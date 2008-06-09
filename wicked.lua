@@ -104,7 +104,7 @@ end
 
 function widget_update(w)
     for i,p in pairs(widgets) do
-        if p == w then
+        if p['widget']:name_get() == w:name_get() then
             do_update(i)
         end
     end
