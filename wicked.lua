@@ -173,11 +173,9 @@ function do_update(id)
         output = format(info['format'], info['widget'], args)
     end
 
-    if output == nil then
-        output = ''
+    if output ~= nil then
+        info['widget']:set(info['field'], output)
     end
-
-    info['widget']:set(info['field'], output)
 end
 
 
