@@ -21,7 +21,7 @@ USAGE
 
 To use wicked, put *require("wicked")* at the top of your .awesomerc.lua, from then on, create your widgets as normal and call *wicked.register()* to register them to wicked.
 
-'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *field*)'
+'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *data_field*)'
 
 *widget*
 
@@ -39,9 +39,9 @@ Format can be either a string argument where $1,$2,$3,etc. will be replaced by t
 
 The amount of seconds it waits between updating this widget, defaults to 1.
 
-*field*
+*data_field*
 
-The name of the field to put the final value into, defaults to *\'text'*.
+If you want to feed the data into a graph or progressbar, put the bar or plot name you want to use in here.
 
 WIDGET TYPES
 ------------

@@ -49,10 +49,6 @@ function register(widget, type, format, timer, field)
         timer = 1
     end
 
-    if field == nil then
-        field = 'text'
-    end
-
     widgets[nextid] = {
         widget = widget,
         type = type,
@@ -174,7 +170,15 @@ function do_update(id)
     end
 
     if output ~= nil then
-        info['widget']:set(info['field'], output)
+        if info['field'] == nil then
+            info['widget']:text_set(output)
+        else
+            if info['widget'].plot_data_add ~= nil then
+                info['widget']:plot_data_add(info['field'],output)
+            elseif info['widget'].bar_data_add ~= nil then
+                info['widget']:bar_data_add(info['field'],output)
+            end
+        end
     end
 end
 
