@@ -171,12 +171,12 @@ function do_update(id)
 
     if output ~= nil then
         if info['field'] == nil then
-            info['widget']:text_set(output)
+            info['widget'].text = output
         else
             if info['widget'].plot_data_add ~= nil then
-                info['widget']:plot_data_add(info['field'],output)
+                info['widget']:plot_data_add(info['field'],tonumber(output))
             elseif info['widget'].bar_data_add ~= nil then
-                info['widget']:bar_data_add(info['field'],output)
+                info['widget']:bar_data_add(info['field'],tonumber(output))
             end
         end
     end
