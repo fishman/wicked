@@ -249,20 +249,11 @@ end
 function get_time(widget, args)
     -- Return a `date` processed format
     -- Get format
-    local f
-    
     if args[1] == nil then
-        f = io.popen('date')
+        return os.date()
     else
-        args[1] = args[1]:gsub('"', '\\"')
-        f = io.popen('date +"'..args[1]..'"')
+        return os.date(args[1])
     end
-
-    local date = f:read()
-    f:close()
-
-    -- Return it
-    return date
 end
 
 function get_fs()
