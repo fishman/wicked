@@ -60,7 +60,10 @@ function register(widget, type, format, timer, field)
 
     -- Add timer
     local id = nextid
-    awful.hooks.timer(timer, function () do_update(id) end, true)
+
+    if timer > 0 then
+        awful.hooks.timer(timer, function () do_update(id) end, true)
+    end
     
     -- Incement ID
     nextid = nextid+1
