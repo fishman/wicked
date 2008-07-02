@@ -231,19 +231,27 @@ end
 
 function get_mem()
     -- Return MEM usage values
-    ---- Get data
-    local mem_usage_file = io.popen('free -m')
-    mem_usage_file:read() mem_usage_file:read()
-    local mem_usage = mem_usage_file:read()
-    mem_usage_file:close()
+    local f = io.open('/proc/meminfo')
 
-    ---- Split data
-    mem_usage = splitbywhitespace(mem_usage)
-    
+    ---- Get data
+    for line in f:lines() do
+        line = splitbywhitespace(line)
+
+        if line[1] == 'MemTotal:' then
+            mem_total = math.floor(line[2]/1024)
+        elseif line[1] == 'MemFree:' then
+            free = math.floor(line[2]/1024)
+        elseif line[1] == 'Buffers:' then
+            buffers = math.floor(line[2]/1024)
+        elseif line[1] == 'Cached:' then
+            cached = math.floor(line[2]/1024)
+        end
+    end
+    f:close()
+
     ---- Calculate percentage
-    mem_total = mem_usage[3]+mem_usage[4]
-    mem_inuse = mem_usage[3]
-    mem_free = mem_usage[4]
+    mem_free=free+buffers+cached
+    mem_inuse=mem_total-mem_free
     mem_usepercent = math.floor(mem_inuse/mem_total*100)
 
     return {mem_usepercent, mem_inuse, mem_total, mem_free}
