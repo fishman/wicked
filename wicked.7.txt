@@ -14,18 +14,18 @@ None
 DESCRIPTION
 -----------
 
-+wicked+ is a library, written in lua, for easy creation and management of dynamic awesome statusbar widgets, from the .awesomerc.lua configuration file.
++wicked+ is a library, written in lua, for easy creation and management of dynamic awesome statusbar widgets, from the rc.lua configuration file.
 
 USAGE
 -----
 
-To use wicked, put *require("wicked")* at the top of your .awesomerc.lua, from then on, create your widgets as normal and call *wicked.register()* to register them to wicked.
+To use wicked, put *require("wicked")* at the top of your rc.lua, from then on, create your widgets as normal and call *wicked.register()* to register them to wicked.
 
 'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *data_field*)'
 
 *widget*
 
-Use the widget created by widget.new for this argument.
+Use the widget created by widget for this argument.
 
 *widget_type*
 
@@ -84,12 +84,12 @@ The net widget type displays usage information about your networks, in the forma
 USAGE EXAMPLES
 --------------
 
-Put these snippets into .awesomerc.lua to see what they do, don't forget to add the widgets to your statusbar with statusbar:widget_add().
+Put these snippets into your rc.lua (usually located at ~/.config/awesome/rc.lua) to see what they do, don't forget to add the widgets to your statusbar with statusbar:widget_add().
 
 **A simple \'Now Playing' widget:**
 
 --------------------------------------
-mpdwidget = widget.new({
+mpdwidget = widget({
     type = 'textbox',
     name = 'mpdwidget'
 })
@@ -101,7 +101,7 @@ wicked.register(mpdwidget, 'mpd',
 **A memory usage monitor:**
 
 --------------------------------------
-memwidget = widget.new({
+memwidget = widget({
     type = 'textbox',
     name = 'memwidget'
 })
@@ -113,7 +113,7 @@ wicked.register(memwidget, 'mem',
 **A filesystem usage indicator:**
 
 ---------------------------------------
-fswidget = widget.new({
+fswidget = widget({
     type = 'textbox',
     name = 'fswidget'
 })
@@ -125,7 +125,7 @@ wicked.register(fswidget, 'fs',
 **A network interface monitor (for eth0)**
 
 ---------------------------------------
-netwidget = widget.new({
+netwidget = widget({
     type = 'textbox',
     name = 'netwidget'
 })
@@ -134,7 +134,7 @@ wicked.register(netwidget, 'net',
     ' <span color="white">NET</span>: ${eth0 down} / ${eth0 up} [ ${eth0 rx} // ${eth0 tx} ]')
 ---------------------------------------
 
-SEE ALSO
+ZEE ALSO
 --------
 awesome(1) awesomerc(5) 
 
