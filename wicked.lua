@@ -155,6 +155,14 @@ function do_update(id)
         args = outputCache['net']
     end
 
+    if info['type']:lower() == 'swap' then
+        if outputCache['swap'] == nil then
+            outputCache['swap'] = get_swap()
+        end
+
+        args = outputCache['swap']
+    end
+
     if info['type']:lower() == 'date' then
         if info['format'] ~= nil then
             args = {info['format']}
@@ -257,6 +265,32 @@ function get_mem()
     return {mem_usepercent, mem_inuse, mem_total, mem_free}
 end
 
+function get_swap()
+    -- Return SWAP usage values
+    local f = io.open('/proc/meminfo')
+
+    ---- Get data
+    for line in f:lines() do
+        line = splitbywhitespace(line)
+
+        if line[1] == 'SwapTotal:' then
+            swap_total = math.floor(line[2]/1024)
+        elseif line[1] == 'SwapFree:' then
+            free = math.floor(line[2]/1024)
+        elseif line[1] == 'SwapCached:' then
+            cached = math.floor(line[2]/1024)
+        end
+    end
+    f:close()
+
+    ---- Calculate percentage
+    swap_free=free+cached
+    swap_inuse=swap_total-swap_free
+    swap_usepercent = math.floor(swap_inuse/swap_total*100)
+
+    return {swap_usepercent, swap_inuse, swap_total, swap_free}
+end
+
 function get_time(widget, args)
     -- Return a `date` processed format
     -- Get format
@@ -306,17 +340,17 @@ function get_net(info)
             args['{'..name..' rx}'] = bytes_to_string(line[1])
             args['{'..name..' tx}'] = bytes_to_string(line[9])
 
-            args['{'..name..' rx_b}'] = line[1]
-            args['{'..name..' tx_b}'] = line[9]
+            args['{'..name..' rx_b}'] = math.floor(line[1]*10)/10
+            args['{'..name..' tx_b}'] = math.floor(line[9]*10)/10
             
-            args['{'..name..' rx_kb}'] = line[1]/1024
-            args['{'..name..' tx_kb}'] = line[9]/1024
+            args['{'..name..' rx_kb}'] = math.floor(line[1]/1024*10)/10
+            args['{'..name..' tx_kb}'] = math.floor(line[9]/1024*10)/10
 
-            args['{'..name..' rx_mb}'] = line[1]/1024/1024
-            args['{'..name..' tx_mb}'] = line[9]/1024/1024
+            args['{'..name..' rx_mb}'] = math.floor(line[1]/1024/1024*10)/10
+            args['{'..name..' tx_mb}'] = math.floor(line[9]/1024/1024*10)/10
 
-            args['{'..name..' rx_gb}'] = line[1]/1024/1024/1024
-            args['{'..name..' tx_gb}'] = line[9]/1024/1024/1024
+            args['{'..name..' rx_gb}'] = math.floor(line[1]/1024/1024/1024*10)/10
+            args['{'..name..' tx_gb}'] = math.floor(line[9]/1024/1024/1024*10)/10
 
             if nets[name] == nil then 
                 nets[name] = {}
@@ -341,17 +375,17 @@ function get_net(info)
                 args['{'..name..' down}'] = bytes_to_string(down)
                 args['{'..name..' up}'] = bytes_to_string(up)
 
-                args['{'..name..' down_b}'] = down
-                args['{'..name..' up_b}'] = up
+                args['{'..name..' down_b}'] = math.floor(down*10)/10
+                args['{'..name..' up_b}'] = math.floor(up*10)/10
 
-                args['{'..name..' down_kb}'] = down/1024
-                args['{'..name..' up_kb}'] = up/1024
+                args['{'..name..' down_kb}'] = math.floor(down/1024*10)/10
+                args['{'..name..' up_kb}'] = math.floor(up/1024*10)/10
 
-                args['{'..name..' down_mb}'] = down/1024/1024
-                args['{'..name..' up_mb}'] = up/1024/1024
+                args['{'..name..' down_mb}'] = math.floor(down/1024/1024*10)/10
+                args['{'..name..' up_mb}'] = math.floor(up/1024/1024*10)/10
 
-                args['{'..name..' down_gb}'] = down/1024/1024/1024
-                args['{'..name..' up_gb}'] = up/1024/1024/1024
+                args['{'..name..' down_gb}'] = math.floor(down/1024/1024/1024*10)/10
+                args['{'..name..' up_gb}'] = math.floor(up/1024/1024/1024*10)/10
             end
 
             nets[name][1] = line[1]

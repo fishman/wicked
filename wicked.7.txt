@@ -60,6 +60,9 @@ The cpu widget type outputs the current cpu usage in percentages, calculated ove
 
 The memory widget type outputs four things, $1 will be replaced with the current memory usage in percentages, $2 will be replaced with the total used memory in Mb, $3 with the total amount memory available to the system, and $4 with the amount of free memory.
 
+'swap'
+
+The swap widget type outputs the same values as the memory widget type, about the amount of swap in use/available.
 
 'mpd'
 
