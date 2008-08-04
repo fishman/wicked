@@ -41,7 +41,7 @@ local outputCache = {}
 setfenv(1, P)
 
 -- Set up hook to clear widget cache
-awful.hooks.timer(1, function () outputCache = {} end)
+awful.hooks.timer.register(1, function () outputCache = {} end)
 
 function register(widget, type, format, timer, field)
     -- Register a new widget into wicked
@@ -62,7 +62,7 @@ function register(widget, type, format, timer, field)
     local id = nextid
 
     if timer > 0 then
-        awful.hooks.timer(timer, function () do_update(id) end, true)
+        awful.hooks.timer.register(timer, function () do_update(id) end, true)
     end
     
     -- Incement ID
