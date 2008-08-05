@@ -226,10 +226,6 @@ function get_cpu()
     diff_total    = {}
     diff_active   = {}
 
-    table.foreach(cpu_total, print)
-    table.foreach(cpu_active, print)
-    table.foreach(cpu_usage, print)
-
     for i,v in ipairs(cpu_lines) do
         ---- Calculate totals
         total_new[i]    = v[2] + v[3] + v[4] + v[5]
