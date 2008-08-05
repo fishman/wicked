@@ -31,8 +31,9 @@ local hooks = hooks
 -- Init variables
 local widgets = {}
 local nextid = 1
-local cpu_total = 0
-local cpu_active = 0
+local cpu_total = {}
+local cpu_active = {}
+local cpu_usage = {}
 local Started = 0
 local nets = {}
 local outputCache = {}
@@ -193,30 +194,57 @@ function do_update(id)
     end
 end
 
-
-
 function get_cpu()
-    -- Return CPU usage percentage
+    -- Calculate CPU usage for all available CPUs / cores and return the
+    -- usage
+
+    -- Perform a new measurmenet
     ---- Get /proc/stat
+    local cpu_lines = {}
     local cpu_usage_file = io.open('/proc/stat')
-    local cpu_usage = cpu_usage_file:read()
+    for line in cpu_usage_file:lines() do
+        if string.sub(line, 1, 3) == 'cpu' then
+            table.insert(cpu_lines, splitbywhitespace(line))
+        end
+    end
     cpu_usage_file:close()
-    cpu_usage = splitbywhitespace(cpu_usage)
 
-    ---- Calculate totals
-    total_new = cpu_usage[2]+cpu_usage[3]+cpu_usage[4]+cpu_usage[5]
-    active_new = cpu_usage[2]+cpu_usage[3]+cpu_usage[4]
+    ---- Ensure tables are initialized correctly
+    while #cpu_total < #cpu_lines do
+        table.insert(cpu_total, 0)
+    end
+    while #cpu_active < #cpu_lines do
+        table.insert(cpu_active, 0)
+    end
+    while #cpu_usage < #cpu_lines do
+        table.insert(cpu_usage, 0)
+    end
+
+    ---- Setup tables
+    total_new     = {}
+    active_new    = {}
+    diff_total    = {}
+    diff_active   = {}
+
+    table.foreach(cpu_total, print)
+    table.foreach(cpu_active, print)
+    table.foreach(cpu_usage, print)
+
+    for i,v in ipairs(cpu_lines) do
+        ---- Calculate totals
+        total_new[i]    = v[2] + v[3] + v[4] + v[5]
+        active_new[i]   = v[2] + v[3] + v[4]
     
-    ---- Calculate percentage
-    diff_total = total_new-cpu_total
-    diff_active = active_new-cpu_active
-    usage_percent = math.floor(diff_active/diff_total*100)
+        ---- Calculate percentage
+        diff_total[i]   = total_new[i]  - cpu_total[i]
+        diff_active[i]  = active_new[i] - cpu_active[i]
+        cpu_usage[i]    = math.floor(diff_active[i] / diff_total[i] * 100)
 
-    ---- Store totals
-    cpu_total = total_new
-    cpu_active = active_new
-
-    return {usage_percent}
+        ---- Store totals
+        cpu_total[i]    = total_new[i]
+        cpu_active[i]   = active_new[i]
+    end
+    return cpu_usage
 end
 
 function get_mpd()

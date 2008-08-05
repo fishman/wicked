@@ -53,7 +53,7 @@ The date widget type uses the output of the \`date` command to populate the widg
 
 'cpu'
 
-The cpu widget type outputs the current cpu usage in percentages, calculated over the duration of it's update_interval. Use $1 inside the format string to display the percentage.
+The cpu widget type outputs the current cpu usage in percentages, calculated over the duration of it's update_interval. Use $1 inside the format string to display the total usage percentage, $2 to show it for your first cpu core only, $3 for the second core, etc.
 
 
 'mem'
