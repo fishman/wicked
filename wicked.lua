@@ -355,9 +355,14 @@ function widgets.net()
 
                 args['{'..name..' down_gb}'] = 0
                 args['{'..name..' up_gb}'] = 0
+
+                nets[name].time = os.time()
             else
-                down = (line[1]-nets[name][1])/info['timer']
-                up = (line[9]-nets[name][2])/info['timer']
+                interval = os.time()-nets[name].time
+                nets[name].time = os.time()
+
+                down = (line[1]-nets[name][1])/interval
+                up = (line[9]-nets[name][2])/interval
 
                 args['{'..name..' down}'] = helper.bytes_to_string(down)
                 args['{'..name..' up}'] = helper.bytes_to_string(up)
