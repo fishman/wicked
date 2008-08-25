@@ -397,12 +397,17 @@ end
 function register(widget, wtype, format, timer, field)
     local reg = {}
     local widget = widget
-    
+
     -- Set properties
     reg.type = wtype
     reg.format = format
     reg.timer = timer
     reg.field = field
+
+    -- Default to timer=1
+    if reg.timer == nil then
+        reg.timer = 1
+    end
 
     -- Allow using a string widget type
     if type(reg.type) == "string" then
@@ -413,7 +418,7 @@ function register(widget, wtype, format, timer, field)
     registered[widget] = reg
 
     -- Start timer
-    awful.hooks.timer.register(timer, function ()
+    awful.hooks.timer.register(reg.timer, function ()
         update(widget)
     end)
 end
@@ -452,11 +457,13 @@ function update(widget)
     else
         data = reg.type(reg.format)
     end
-    
-    if type(reg.format) == "string" then
-        data = helper.format(reg.format, data)
-    elseif type(reg.format) == "function" then
-        data = reg.format(widget, data)
+
+    if type(data) == "table" then
+        if type(reg.format) == "string" then
+            data = helper.format(reg.format, data)
+        elseif type(reg.format) == "function" then
+            data = reg.format(widget, data)
+        end
     end
     
     if reg.field == nil then
