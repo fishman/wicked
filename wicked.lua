@@ -1,15 +1,15 @@
--- 'Wicked' lua library, require it in .awesomerc.lua to create dynamic widgets
--- Author: Lucas `GGLucas` de Vries [lucasdevries@gmail.com]
+---------------------------------------------------------------------------
+-- Wicked widgets for the awesome window manager
+---------------------------------------------------------------------------
+-- Lucas de Vries <lucas@glacicle.com>
+-- Licensed under the WTFPL
+-- Version: v1.0pre-awe3.0rc4
+---------------------------------------------------------------------------
 
--- Get package name
-local P = {}
-if _REQUIREDNAME == nil then
-    wicked = P
-else
-    _G[_REQUIREDNAME] = P
-end
+-- Require libs
+require("awful")
 
--- Grab environment
+---- {{{ Grab environment
 local ipairs = ipairs
 local pairs = pairs
 local print = print
@@ -19,67 +19,94 @@ local tostring = tostring
 local math = math
 local table = table
 local awful = awful
-local awesome = awesome
-local client = client
-local tag = tag
-local mouse = mouse
 local os = os
 local io = io
 local string = string
-local hooks = hooks
 
--- Init variables
-local widgets = {}
-local nextid = 1
+-- Grab C API
+local capi =
+{
+    awesome = awesome,
+    screen = screen,
+    client = client,
+    mouse = mouse,
+    button = button,
+    titlebar = titlebar,
+    widget = widget,
+    hooks = hooks,
+    keygrabber = keygrabber
+}
+
+-- }}}
+
+-- Wicked: Widgets for the awesome window manager
+module("wicked")
+
+---- {{{ Initialise variables
+local registered = {}
+local widget_cache = {}
+
+-- Initialise function tables
+widgets = {}
+helper = {}
+
+local nets = {}
 local cpu_total = {}
 local cpu_active = {}
 local cpu_usage = {}
-local Started = 0
-local nets = {}
-local outputCache = {}
 
--- Reset environment
-setfenv(1, P)
+-- }}}
 
--- Set up hook to clear widget cache
-awful.hooks.timer.register(1, function () outputCache = {} end)
+---- {{{ Helper functions
+---- {{{ Format a string with args
+function helper.format(format, args)
+    -- TODO: Find a more efficient way to do this
 
-function register(widget, type, format, timer, field)
-    -- Register a new widget into wicked
-    if timer == nil then
-        timer = 1
-    end
-
-    widgets[nextid] = {
-        widget = widget,
-        type = type,
-        timer = timer,
-        count = timer,
-        format = format,
-        field = field
-    }
-
-    -- Add timer
-    local id = nextid
-
-    if timer > 0 then
-        awful.hooks.timer.register(timer, function () do_update(id) end, true)
-    end
-    
-    -- Incement ID
-    nextid = nextid+1
-end
-
-function format(format, widget, args)
-    -- Format a string with the given arguments
+    -- Format a string
     for var,val in pairs(args) do
         format = string.gsub(format, '$'..var, val)
     end
 
+    -- Return formatted string
     return format
 end
+-- }}}
 
-function splitbywhitespace(str)
+---- {{{ Convert amount of bytes to string
+function helper.bytes_to_string(bytes, sec)
+    if bytes == nil or tonumber(bytes) == nil then
+        return ''
+    end
+
+    bytes = tonumber(bytes)
+
+    signs = {}
+    signs[1] = 'b'
+    signs[2] = 'KiB'
+    signs[3] = 'MiB'
+    signs[4] = 'GiB'
+    signs[5] = 'TiB'
+
+    sign = 1
+
+    while bytes/1024 > 1 and signs[sign+1] ~= nil do
+        bytes = bytes/1024
+        sign = sign+1
+    end
+
+    bytes = bytes*10
+    bytes = math.floor(bytes)/10
+
+    if sec then
+        return tostring(bytes)..signs[sign]
+    else
+        return tostring(bytes)..signs[sign]..'ps'
+    end
+end
+-- }}}
+
+---- {{{ Split by whitespace
+function helper.splitbywhitespace(str)
     values = {}
     start = 1
     splitstart, splitend = string.find(str, ' ', start)
@@ -101,110 +128,48 @@ function splitbywhitespace(str)
 
     return values
 end
+-- }}}
 
-function widget_update(w)
-    for i,p in pairs(widgets) do
-        if p['widget'].name == w.name then
-            do_update(i)
-        end
+-- }}}
+
+---- {{{ Widget types
+
+---- {{{ MPD widget type
+function widgets.mpd()
+    ---- Get data from mpc
+    local nowplaying_file = io.popen('mpc')
+    local nowplaying = nowplaying_file:read()
+
+    -- Check that it's not nil
+    if nowplaying == nil then
+        return {''}
     end
+
+    -- Close the command
+    nowplaying_file:close()
+    
+    -- Escape
+    nowplaying = awful.escape(nowplaying)
+
+    -- Return it
+    return {nowplaying}
 end
 
-function do_update(id)
-    -- Update a specific widget
-    local info = widgets[id]
-    local args = {}
-    local func = nil
+widget_cache[widgets.mpd] = {}
+-- }}}
 
-    if info['type']:lower() == 'mem' then
-        if outputCache['mem'] == nil then
-            outputCache['mem'] = get_mem()
-        end
-
-        args = outputCache['mem']
-    end
-
-    if info['type']:lower() == 'mpd' then
-        if outputCache['mpd'] == nil then
-            outputCache['mpd'] = get_mpd()
-        end
-
-        args = outputCache['mpd']
-    end
-
-    if info['type']:lower() == 'cpu' then
-        if outputCache['cpu'] == nil then
-            outputCache['cpu'] = get_cpu()
-        end
-
-        args = outputCache['cpu']
-    end
-
-    if info['type']:lower() == 'fs' then
-        if outputCache['fs'] == nil then
-            outputCache['fs'] = get_fs()
-        end
-
-        args = outputCache['fs']
-    end
-
-    if info['type']:lower() == 'net' then
-        if outputCache['net'] == nil then
-            outputCache['net'] = get_net(info)
-        end
-
-        args = outputCache['net']
-    end
-
-    if info['type']:lower() == 'swap' then
-        if outputCache['swap'] == nil then
-            outputCache['swap'] = get_swap()
-        end
-
-        args = outputCache['swap']
-    end
-
-    if info['type']:lower() == 'date' then
-        if info['format'] ~= nil then
-            args = {info['format']}
-        end
-        func = get_time
-    end
-
-    if type(info['format']) == 'function' then
-        func = info['format']
-    end
-
-    if type(func) == 'function' then
-        output = func(info['widget'], args)
-    else
-        output = format(info['format'], info['widget'], args)
-    end
-
-    if output ~= nil then
-        if info['field'] == nil then
-            info['widget'].text = output
-        else
-            if info['widget'].plot_data_add ~= nil then
-                info['widget']:plot_data_add(info['field'],tonumber(output))
-            elseif info['widget'].bar_data_add ~= nil then
-                info['widget']:bar_data_add(info['field'],tonumber(output))
-            end
-        end
-    end
-end
-
-function get_cpu()
+---- {{{ CPU widget type
+function widgets.cpu()
     -- Calculate CPU usage for all available CPUs / cores and return the
     -- usage
 
-    -- Perform a new measurmenet
+    -- Perform a new measurement
     ---- Get /proc/stat
     local cpu_lines = {}
     local cpu_usage_file = io.open('/proc/stat')
     for line in cpu_usage_file:lines() do
         if string.sub(line, 1, 3) == 'cpu' then
-            table.insert(cpu_lines, splitbywhitespace(line))
+            table.insert(cpu_lines, helper.splitbywhitespace(line))
         end
     end
     cpu_usage_file:close()
@@ -240,34 +205,21 @@ function get_cpu()
         cpu_total[i]    = total_new[i]
         cpu_active[i]   = active_new[i]
     end
+
     return cpu_usage
 end
 
-function get_mpd()
-    -- Return MPD currently playing song
-    ---- Get data from mpc
-    local nowplaying_file = io.popen('mpc')
-    local nowplaying = nowplaying_file:read()
+widget_cache[widgets.cpu] = {}
+-- }}}
 
-    if nowplaying == nil then
-        return {''}
-    end
-
-    nowplaying_file:close()
-    
-    nowplaying = nowplaying:gsub('&', '&amp;')
-
-    -- Return it
-    return {nowplaying}
-end
-
-function get_mem()
+---- {{{ Memory widget type
+function widgets.mem()
     -- Return MEM usage values
     local f = io.open('/proc/meminfo')
 
     ---- Get data
     for line in f:lines() do
-        line = splitbywhitespace(line)
+        line = helper.splitbywhitespace(line)
 
         if line[1] == 'MemTotal:' then
             mem_total = math.floor(line[2]/1024)
@@ -289,13 +241,17 @@ function get_mem()
     return {mem_usepercent, mem_inuse, mem_total, mem_free}
 end
 
-function get_swap()
+widget_cache[widgets.mem] = {}
+-- }}}
+
+---- {{{ Swap widget type
+function widgets.swap()
     -- Return SWAP usage values
     local f = io.open('/proc/meminfo')
 
     ---- Get data
     for line in f:lines() do
-        line = splitbywhitespace(line)
+        line = helper.splitbywhitespace(line)
 
         if line[1] == 'SwapTotal:' then
             swap_total = math.floor(line[2]/1024)
@@ -315,22 +271,27 @@ function get_swap()
     return {swap_usepercent, swap_inuse, swap_total, swap_free}
 end
 
-function get_time(widget, args)
-    -- Return a `date` processed format
+widget_cache[widgets.swap] = {}
+-- }}}
+
+---- {{{ Date widget type
+function widgets.date(format)
     -- Get format
-    if args[1] == nil then
+    if format == nil then
         return os.date()
     else
-        return os.date(args[1])
+        return os.date(format)
     end
 end
+-- }}}
 
-function get_fs()
+---- {{{ Filesystem widget type
+function widgets.fs()
     local f = io.popen('df -h')
     local args = {}
 
     for line in f:lines() do
-        vars = splitbywhitespace(line)
+        vars = helper.splitbywhitespace(line)
         
         if vars[1] ~= 'Filesystem' then
             args['{'..vars[6]..' size}'] = vars[2]
@@ -343,13 +304,15 @@ function get_fs()
     f:close()
     return args
 end
+-- }}}
 
-function get_net(info)
+---- {{{ Net widget type
+function widgets.net()
     local f = io.open('/proc/net/dev')
     args = {}
 
     for line in f:lines() do
-        line = splitbywhitespace(line)
+        line = helper.splitbywhitespace(line)
 
         local p = line[1]:find(':')
         if p ~= nil then
@@ -361,8 +324,8 @@ function get_net(info)
                 line[9] = line[10]
             end
 
-            args['{'..name..' rx}'] = bytes_to_string(line[1])
-            args['{'..name..' tx}'] = bytes_to_string(line[9])
+            args['{'..name..' rx}'] = helper.bytes_to_string(line[1])
+            args['{'..name..' tx}'] = helper.bytes_to_string(line[9])
 
             args['{'..name..' rx_b}'] = math.floor(line[1]*10)/10
             args['{'..name..' tx_b}'] = math.floor(line[9]*10)/10
@@ -396,8 +359,8 @@ function get_net(info)
                 down = (line[1]-nets[name][1])/info['timer']
                 up = (line[9]-nets[name][2])/info['timer']
 
-                args['{'..name..' down}'] = bytes_to_string(down)
-                args['{'..name..' up}'] = bytes_to_string(up)
+                args['{'..name..' down}'] = helper.bytes_to_string(down)
+                args['{'..name..' up}'] = helper.bytes_to_string(up)
 
                 args['{'..name..' down_b}'] = math.floor(down*10)/10
                 args['{'..name..' up_b}'] = math.floor(up*10)/10
@@ -420,39 +383,95 @@ function get_net(info)
     f:close()
     return args
 end
+-- }}}
 
-function bytes_to_string(bytes, sec)
-    if bytes == nil or tonumber(bytes) == nil then
-        return ''
-    end
-
-    bytes = tonumber(bytes)
-
-    signs = {}
-    signs[1] = 'b'
-    signs[2] = 'KiB'
-    signs[3] = 'MiB'
-    signs[4] = 'GiB'
-    signs[5] = 'TiB'
-
-    sign = 1
-
-    while bytes/1024 > 1 and signs[sign+1] ~= nil do
-        bytes = bytes/1024
-        sign = sign+1
-    end
-
-    bytes = bytes*10
-    bytes = math.floor(bytes)/10
-
-    if sec then
-        return tostring(bytes)..signs[sign]
-    else
-        return tostring(bytes)..signs[sign]..'ps'
-    end
+-- For backwards compatibility: custom function
+widgets["function"] = function ()
+    return {}
 end
 
--- Build function list
-P.register = register
-P.update = widget_update
-return P
+-- }}}
+
+---- {{{ Main functions
+---- {{{ Register widget
+function register(widget, wtype, format, timer, field)
+    local reg = {}
+    local widget = widget
+    
+    -- Set properties
+    reg.type = wtype
+    reg.format = format
+    reg.timer = timer
+    reg.field = field
+
+    -- Allow using a string widget type
+    if type(reg.type) == "string" then
+        reg.type = widgets[reg.type]
+    end
+
+    -- Put widget in table
+    registered[widget] = reg
+
+    -- Start timer
+    awful.hooks.timer.register(timer, function ()
+        update(widget)
+    end)
+end
+-- }}}
+
+---- {{{ Update widget
+function update(widget)
+    -- Get information
+    local reg = registered[widget]
+
+    -- Check if there are any equal widgets
+    if reg == nil then
+        for w, i in pairs(registered) do
+            if w == widget then
+                update(w)
+            end
+        end
+
+        return
+    end
+
+    local t = os.time()
+    local data = {}
+
+    -- Check if we have output chached for this widget,
+    -- newer than last widget update.
+    if widget_cache[reg.type] ~= nil then
+        local c = widget_cache[reg.type]
+
+        if c.time == nil or c.time <= t-reg.timer then
+            c.time = t
+            c.data = reg.type(reg.format)
+        end
+        
+        data = c.data
+    else
+        data = reg.type(reg.format)
+    end
+    
+    if type(reg.format) == "string" then
+        data = helper.format(reg.format, data)
+    elseif type(reg.format) == "function" then
+        data = reg.format(widget, data)
+    end
+    
+    if reg.field == nil then
+        widget.text = data
+    elseif widget.plot_data_add ~= nil then
+        widget:plot_data_add(reg.field, tonumber(data))
+    elseif widget.bar_data_add ~= nil then
+        widget:bar_data_add(reg.field, tonumber(data))
+    end
+
+    return data
+end
+
+-- }}}
+
+-- }}}
+
+-- vim: set filetype=lua fdm=marker tabstop=4 shiftwidth=4 nu:

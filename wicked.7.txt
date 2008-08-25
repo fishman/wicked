@@ -23,73 +23,102 @@ To use wicked, put *require("wicked")* at the top of your rc.lua, from then on, 
 
 'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *data_field*)'
 
-*widget*
+
+'widget'
 
 Use the widget created by widget for this argument.
 
-*widget_type*
+'widget_type'
 
-Enter one of the possible widget types here, see the _WIDGET TYPES_ section.
+Enter one of the possible widget type functions or a customised one here, see the _WIDGET TYPES_ section.
 
-*format*
+'format'
 
 Format can be either a string argument where $1,$2,$3,etc. will be replaced by their respective values, or a function called with the arguments *(widget, arguments)*, arguments being a table of the values otherwise inserted into the string, if it is a function, its return value will be used to populate the widget. Note that some widget types might not need or use this parameter.
 
-*update_interval*
+'update_interval'
 
 The amount of seconds it waits between updating this widget, defaults to 1.
 
-*data_field*
+'data_field'
 
 If you want to feed the data into a graph or progressbar, put the bar or plot name you want to use in here.
 
 WIDGET TYPES
 ------------
 
-'date'
+Widget types consist of functions, which take the "format" argument given to wicked.register as an argument, and return a table of values to insert in the format string, creators of custom widget types should note that the format argument may be a function as well as a string.
 
-The date widget type uses the output of the \`date` command to populate the widget, if format is given, it will be passed as the FORMAT argument to \`date`.
+For backwards compatibility purposes, if a string X is given as widget_type, it will use \'wicked.widgets.X' as the widget type.
+
+**wicked.widgets.date**
+
+The date widget type uses the output of the \`os.date` command to populate the widget, if format is given, it will be passed as the FORMAT argument to \`os.date`.
 
 
-'cpu'
+**wicked.widgets.cpu**
 
 The cpu widget type outputs the current cpu usage in percentages, calculated over the duration of it's update_interval. Use $1 inside the format string to display the total usage percentage, $2 to show it for your first cpu core only, $3 for the second core, etc.
 
 
-'mem'
+**wicked.widgets.mem**
 
 The memory widget type outputs four things, $1 will be replaced with the current memory usage in percentages, $2 will be replaced with the total used memory in Mb, $3 with the total amount memory available to the system, and $4 with the amount of free memory.
 
-'swap'
+
+**wicked.widgets.swap**
 
 The swap widget type outputs the same values as the memory widget type, about the amount of swap in use/available.
 
-'mpd'
+
+**wicked.widgets.mpd**
 
 The mpd widget type outputs the song currently playing on the music player daemon, note that the \`mpc` application needs to be installed and configured in order to use this.
 
 
-'fs'
+**wicked.widgets.fs**
 
 The fs widget type can display size and usage information about currently mounted filesystems, use ${mountpoint datatype} inside the format string to display that data, e.g. ${/ avail} displays the free space on the partition mounted on /. Available datatypes are \'used', \'size', \'usep' (Usage in %) and \'avail'.
 
 
-'function'
-
-Use the function type to define your own custom widget, pass a function as the \`format` argument and it will be called at the specified interval, the function's return value is used to populate the widget.
-
-
-'net'
+**wicked.widgets.net**
 
 The net widget type displays usage information about your networks, in the format string, ${interface type} will be replaced with with that value, possible types are: rx, tx, up, down. You can suffix the type with _b, _kb, _mb or _gb, to display the information in those units. 
 
 
-USAGE EXAMPLES
---------------
+CUSTOM TYPES
+------------
 
-Put these snippets into your rc.lua (usually located at ~/.config/awesome/rc.lua) to see what they do, don't forget to add the widgets to your statusbar with statusbar:widget_add().
+You can create your own custom widgets easily, an example of a widget that returns the output of a specific command is:
 
-**A simple \'Now Playing' widget:**
+--------------------------------------
+mywidget = widget({
+    type = 'textbox',
+    name = 'mywidget'
+})
+
+function run_script()
+   local filedescriptor = io.popen('my_nifty_script.py')
+   local value = filedescriptor:read()
+   filedescriptor:close()
+
+   return {value}
+end
+
+-- Runs 'my_nifty_script.py' every 10 seconds and puts its output into the widget
+wicked.register(mywidget, run_script, "$1", 10)
+--------------------------------------
+
+As you can see, the type function returns a table of values to insert into the format string, the first value in the table will be used in place of $1, the second in place of $2, etc.
+
+
+FORMAT FUNCTIONS
+----------------
+
+You can use a function instead of a string as the format parameter, with this, you are able to check the value returned by wicked and change the output accordingly.
+The format function will get the widget as its first argument, and a table with the values otherwise inserted into the format string as its second argument, and should return the text to be used for the widget.
+
+An example that uses a format function in order to hide the mpd widget when there is no song playing:
 
 --------------------------------------
 mpdwidget = widget({
@@ -97,11 +126,35 @@ mpdwidget = widget({
     name = 'mpdwidget'
 })
 
-wicked.register(mpdwidget, 'mpd',
+wicked.register(mpdwidget, wicked.widgets.mpd, 
+    function (widget, args)
+        if args[1]:find("volume:") == nil then
+            return ' <span color="white">Now Playing:</span> '..args[1]
+        else
+            return ''
+        end
+    end)
+--------------------------------------
+
+
+USAGE EXAMPLES
+--------------
+
+Put these snippets into your rc.lua (usually located at ~/.config/awesome/rc.lua) to see what they do, don't forget to add the widgets to your statusbar.
+
+**A simple \'Now Playing' widget**
+
+--------------------------------------
+mpdwidget = widget({
+    type = 'textbox',
+    name = 'mpdwidget'
+})
+
+wicked.register(mpdwidget, wicked.widgets.mpd,
     ' <span color="white">Now Playing:</span> $1')
 --------------------------------------
 
-**A memory usage monitor:**
+**A memory usage monitor**
 
 --------------------------------------
 memwidget = widget({
@@ -109,11 +162,11 @@ memwidget = widget({
     name = 'memwidget'
 })
 
-wicked.register(memwidget, 'mem',
+wicked.register(memwidget, wicked.widgets.mem,
     ' <span color="white">Memory:</span> $1 ($2Mb/$3Mb)')
 ---------------------------------------
 
-**A filesystem usage indicator:**
+**A filesystem usage indicator**
 
 ---------------------------------------
 fswidget = widget({
@@ -121,7 +174,7 @@ fswidget = widget({
     name = 'fswidget'
 })
 
-wicked.register(fswidget, 'fs',
+wicked.register(fswidget, wicked.widgets.fs,
     ' <span color="white">FS:</span> ${/ used}/${/ size} (${/ usep} used)', 120)
 ---------------------------------------
 
@@ -133,14 +186,14 @@ netwidget = widget({
     name = 'netwidget'
 })
 
-wicked.register(netwidget, 'net', 
+wicked.register(netwidget, wicked.widgets.net, 
     ' <span color="white">NET</span>: ${eth0 down} / ${eth0 up} [ ${eth0 rx} // ${eth0 tx} ]')
 ---------------------------------------
 
-ZEE ALSO
+SEE ALSO
 --------
 awesome(1) awesomerc(5) 
 
 AUTHORS
 -------
-Lucas de Vries <lucasdevries@gmail.com>
+Lucas de Vries <lucas@glacicle.com>
