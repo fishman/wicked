@@ -420,25 +420,28 @@ function register(widget, wtype, format, timer, field)
     end
 
     -- Put widget in table
-    registered[widget] = reg
+    if registered[widget] == nil then
+        registered[widget] = {}
+    end
+
+    table.insert(registered[widget], reg)
 
     -- Start timer
     awful.hooks.timer.register(reg.timer, function ()
-        update(widget)
+        update(widget, reg)
     end)
 end
 -- }}}
 
 ---- {{{ Update widget
-function update(widget)
-    -- Get information
-    local reg = registered[widget]
-
+function update(widget, reg)
     -- Check if there are any equal widgets
     if reg == nil then
         for w, i in pairs(registered) do
             if w == widget then
-                update(w)
+                for k,v in pairs(i) do
+                    update(w, v)
+                end
             end
         end
 
