@@ -21,7 +21,7 @@ USAGE
 
 To use wicked, put *require("wicked")* at the top of your rc.lua, from then on, create your widgets as normal and call *wicked.register()* to register them to wicked.
 
-'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *data_field*)'
+'wicked.register(*widget*, *widget_type*, *format*, *update_interval*, *data_field*, *padding*)'
 
 
 'widget'
@@ -44,10 +44,16 @@ The amount of seconds it waits between updating this widget, defaults to 1.
 
 If you want to feed the data into a graph or progressbar, put the bar or plot name you want to use in here.
 
+'padding'
+
+To prevent widgets jumping about your statusbar all the time, you can specify a padding value here, the number given here represents the minimum amount of digits that the widget's output has to contain (ie specifying 2 padds values under 10 with one zero, specifying 3 padds values under 100 with one zero and values under 10 with two zeros, etc)
+If the widget type supports it, you can specify a table with different numbers, the first number being the padding for the first value the type would return, the second number for the second value, etc.
+
+
 WIDGET TYPES
 ------------
 
-Widget types consist of functions, which take the "format" argument given to wicked.register as an argument, and return a table of values to insert in the format string, creators of custom widget types should note that the format argument may be a function as well as a string.
+Widget types consist of functions that take the "format" argument given to wicked.register as the first argument, the "padding" argument as the second, and return a table of values to insert in the format string, creators of custom widget types should note that the format argument may be a function as well as a string.
 
 For backwards compatibility purposes, if a string X is given as widget_type, it will use \'wicked.widgets.X' as the widget type.
 
@@ -154,7 +160,7 @@ wicked.register(mpdwidget, wicked.widgets.mpd,
     ' <span color="white">Now Playing:</span> $1')
 --------------------------------------
 
-**A memory usage monitor**
+**A memory usage monitor, with padding**
 
 --------------------------------------
 memwidget = widget({
@@ -163,7 +169,8 @@ memwidget = widget({
 })
 
 wicked.register(memwidget, wicked.widgets.mem,
-    ' <span color="white">Memory:</span> $1 ($2Mb/$3Mb)')
+    ' <span color="white">Memory:</span> $1 ($2Mb/$3Mb)',
+    {2, 4, 4})
 ---------------------------------------
 
 **A filesystem usage indicator**

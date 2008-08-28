@@ -130,6 +130,24 @@ function helper.splitbywhitespace(str)
 end
 -- }}}
 
+---- {{{ Padd a number to a minimum amount of digits
+function helper.padd(number, padding)
+    s = tostring(number)
+
+    if padding == nil then
+        return s
+    end
+
+    for i=1,padding do
+        if math.floor(number/math.pow(10,(i-1))) == 0 then
+            s = "0"..s
+        end
+    end
+
+    return s
+end
+-- }}}
+
 -- }}}
 
 ---- {{{ Widget types
@@ -159,7 +177,7 @@ widget_cache[widgets.mpd] = {}
 -- }}}
 
 ---- {{{ CPU widget type
-function widgets.cpu()
+function widgets.cpu(format, padding)
     -- Calculate CPU usage for all available CPUs / cores and return the
     -- usage
 
@@ -206,6 +224,18 @@ function widgets.cpu()
         cpu_active[i]   = active_new[i]
     end
 
+    if padding ~= nil then
+        for k,v in pairs(cpu_usage) do
+            if type(padding) == "table" then
+                p = padding[k]
+            else
+                p = padding
+            end
+
+            cpu_usage[k] = helper.padd(cpu_usage[k], p)
+        end
+    end
+
     return cpu_usage
 end
 
@@ -213,7 +243,7 @@ widget_cache[widgets.cpu] = {}
 -- }}}
 
 ---- {{{ Memory widget type
-function widgets.mem()
+function widgets.mem(format, padding)
     -- Return MEM usage values
     local f = io.open('/proc/meminfo')
 
@@ -238,6 +268,20 @@ function widgets.mem()
     mem_inuse=mem_total-mem_free
     mem_usepercent = math.floor(mem_inuse/mem_total*100)
 
+    if padding then
+        if type(padding) == "table" then
+            mem_usepercent = helper.padd(mem_usepercent, padding[1])
+            mem_inuse = helper.padd(mem_inuse, padding[2])
+            mem_total = helper.padd(mem_total, padding[3])
+            mem_free = helper.padd(mem_free, padding[4])
+        else
+            mem_usepercent = helper.padd(mem_usepercent, padding)
+            mem_inuse = helper.padd(mem_inuse, padding)
+            mem_total = helper.padd(mem_total, padding)
+            mem_free = helper.padd(mem_free, padding)
+        end
+    end
+
     return {mem_usepercent, mem_inuse, mem_total, mem_free}
 end
 
@@ -245,7 +289,7 @@ widget_cache[widgets.mem] = {}
 -- }}}
 
 ---- {{{ Swap widget type
-function widgets.swap()
+function widgets.swap(format, padding)
     -- Return SWAP usage values
     local f = io.open('/proc/meminfo')
 
@@ -268,6 +312,20 @@ function widgets.swap()
     swap_inuse=swap_total-swap_free
     swap_usepercent = math.floor(swap_inuse/swap_total*100)
 
+    if padding then
+        if type(padding) == "table" then
+            swap_usepercent = helper.padd(swap_usepercent, padding[1])
+            swap_inuse = helper.padd(swap_inuse, padding[2])
+            swap_total = helper.padd(swap_total, padding[3])
+            swap_free = helper.padd(swap_free, padding[4])
+        else
+            swap_usepercent = helper.padd(swap_usepercent, padding)
+            swap_inuse = helper.padd(swap_inuse, padding)
+            swap_total = helper.padd(swap_total, padding)
+            swap_free = helper.padd(swap_free, padding)
+        end
+    end
+
     return {swap_usepercent, swap_inuse, swap_total, swap_free}
 end
 
@@ -286,7 +344,7 @@ end
 -- }}}
 
 ---- {{{ Filesystem widget type
-function widgets.fs()
+function widgets.fs(format, padding)
     local f = io.popen('df -h')
     local args = {}
 
@@ -294,10 +352,26 @@ function widgets.fs()
         vars = helper.splitbywhitespace(line)
         
         if vars[1] ~= 'Filesystem' then
+            vars[5] = vars[5]:gsub('%%','')
+
+            if padding then
+                if type(padding) == "table" then
+                    vars[2] = helper.padd(vars[2], padding[1])
+                    vars[3] = helper.padd(vars[3], padding[2])
+                    vars[4] = helper.padd(vars[4], padding[3])
+                    vars[5] = helper.padd(vars[5], padding[4])
+                else
+                    vars[2] = helper.padd(vars[2], padding)
+                    vars[3] = helper.padd(vars[3], padding)
+                    vars[4] = helper.padd(vars[4], padding)
+                    vars[5] = helper.padd(vars[5], padding)
+                end
+            end
+
             args['{'..vars[6]..' size}'] = vars[2]
             args['{'..vars[6]..' used}'] = vars[3]
             args['{'..vars[6]..' avail}'] = vars[4]
-            args['{'..vars[6]..' usep}'] = vars[5]:gsub('%%','')
+            args['{'..vars[6]..' usep}'] = vars[5]
         end
     end
 
@@ -307,7 +381,7 @@ end
 -- }}}
 
 ---- {{{ Net widget type
-function widgets.net()
+function widgets.net(format, padding)
     local f = io.open('/proc/net/dev')
     args = {}
 
@@ -324,8 +398,13 @@ function widgets.net()
                 line[9] = line[10]
             end
 
-            args['{'..name..' rx}'] = helper.bytes_to_string(line[1])
-            args['{'..name..' tx}'] = helper.bytes_to_string(line[9])
+            if padding then
+                args['{'..name..' rx}'] = helper.padd(helper.bytes_to_string(line[1]), padding)
+                args['{'..name..' tx}'] = helper.padd(helper.bytes_to_string(line[9]), padding)
+            else
+                args['{'..name..' rx}'] = helper.bytes_to_string(line[1])
+                args['{'..name..' tx}'] = helper.bytes_to_string(line[9])
+            end
 
             args['{'..name..' rx_b}'] = math.floor(line[1]*10)/10
             args['{'..name..' tx_b}'] = math.floor(line[9]*10)/10
@@ -364,8 +443,13 @@ function widgets.net()
                 down = (line[1]-nets[name][1])/interval
                 up = (line[9]-nets[name][2])/interval
 
-                args['{'..name..' down}'] = helper.bytes_to_string(down)
-                args['{'..name..' up}'] = helper.bytes_to_string(up)
+                if padding then
+                    args['{'..name..' down}'] = helper.padd(helper.bytes_to_string(down), padding)
+                    args['{'..name..' up}'] = helper.padd(helper.bytes_to_string(up), padding)
+                else
+                    args['{'..name..' down}'] = helper.bytes_to_string(down)
+                    args['{'..name..' up}'] = helper.bytes_to_string(up)
+                end
 
                 args['{'..name..' down_b}'] = math.floor(down*10)/10
                 args['{'..name..' up_b}'] = math.floor(up*10)/10
@@ -399,7 +483,7 @@ end
 
 ---- {{{ Main functions
 ---- {{{ Register widget
-function register(widget, wtype, format, timer, field)
+function register(widget, wtype, format, timer, field, padd)
     local reg = {}
     local widget = widget
 
@@ -408,6 +492,7 @@ function register(widget, wtype, format, timer, field)
     reg.format = format
     reg.timer = timer
     reg.field = field
+    reg.padd = padd
 
     -- Default to timer=1
     if reg.timer == nil then
@@ -458,12 +543,12 @@ function update(widget, reg)
 
         if c.time == nil or c.time <= t-reg.timer then
             c.time = t
-            c.data = reg.type(reg.format)
+            c.data = reg.type(reg.format, reg.padd)
         end
         
         data = c.data
     else
-        data = reg.type(reg.format)
+        data = reg.type(reg.format, reg.padd)
     end
 
     if type(data) == "table" then
