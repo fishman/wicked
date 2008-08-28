@@ -72,8 +72,26 @@ function helper.format(format, args)
 end
 -- }}}
 
+---- {{{ Padd a number to a minimum amount of digits
+function helper.padd(number, padding)
+    s = tostring(number)
+
+    if padding == nil then
+        return s
+    end
+
+    for i=1,padding do
+        if math.floor(number/math.pow(10,(i-1))) == 0 then
+            s = "0"..s
+        end
+    end
+
+    return s
+end
+-- }}}
+
 ---- {{{ Convert amount of bytes to string
-function helper.bytes_to_string(bytes, sec)
+function helper.bytes_to_string(bytes, sec, padding)
     if bytes == nil or tonumber(bytes) == nil then
         return ''
     end
@@ -97,10 +115,15 @@ function helper.bytes_to_string(bytes, sec)
     bytes = bytes*10
     bytes = math.floor(bytes)/10
 
+    if padding then
+        bytes = helper.padd(bytes*10, padding+1)
+        bytes = bytes:sub(1, bytes:len()-1).."."..bytes:sub(bytes:len())
+    end
+
     if sec then
-        return tostring(bytes)..signs[sign]
-    else
         return tostring(bytes)..signs[sign]..'ps'
+    else
+        return tostring(bytes)..signs[sign]
     end
 end
 -- }}}
@@ -127,24 +150,6 @@ function helper.splitbywhitespace(str)
     end
 
     return values
-end
--- }}}
-
----- {{{ Padd a number to a minimum amount of digits
-function helper.padd(number, padding)
-    s = tostring(number)
-
-    if padding == nil then
-        return s
-    end
-
-    for i=1,padding do
-        if math.floor(number/math.pow(10,(i-1))) == 0 then
-            s = "0"..s
-        end
-    end
-
-    return s
 end
 -- }}}
 
@@ -399,8 +404,8 @@ function widgets.net(format, padding)
             end
 
             if padding then
-                args['{'..name..' rx}'] = helper.padd(helper.bytes_to_string(line[1]), padding)
-                args['{'..name..' tx}'] = helper.padd(helper.bytes_to_string(line[9]), padding)
+                args['{'..name..' rx}'] = helper.bytes_to_string(line[1], nil, padding)
+                args['{'..name..' tx}'] = helper.bytes_to_string(line[9], nil, padding)
             else
                 args['{'..name..' rx}'] = helper.bytes_to_string(line[1])
                 args['{'..name..' tx}'] = helper.bytes_to_string(line[9])
@@ -444,11 +449,11 @@ function widgets.net(format, padding)
                 up = (line[9]-nets[name][2])/interval
 
                 if padding then
-                    args['{'..name..' down}'] = helper.padd(helper.bytes_to_string(down), padding)
-                    args['{'..name..' up}'] = helper.padd(helper.bytes_to_string(up), padding)
+                    args['{'..name..' down}'] = helper.bytes_to_string(down, true, padding)
+                    args['{'..name..' up}'] = helper.bytes_to_string(up, true, padding)
                 else
-                    args['{'..name..' down}'] = helper.bytes_to_string(down)
-                    args['{'..name..' up}'] = helper.bytes_to_string(up)
+                    args['{'..name..' down}'] = helper.bytes_to_string(down, true)
+                    args['{'..name..' up}'] = helper.bytes_to_string(up, true)
                 end
 
                 args['{'..name..' down_b}'] = math.floor(down*10)/10
