@@ -86,6 +86,10 @@ function helper.padd(number, padding)
         end
     end
 
+    if number == 0 then
+        s = s:sub(2)
+    end
+
     return s
 end
 -- }}}
