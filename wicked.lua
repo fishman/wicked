@@ -481,6 +481,7 @@ function widgets.net(format, padding)
     f:close()
     return args
 end
+widget_cache[widgets.net] = {}
 -- }}}
 
 -- For backwards compatibility: custom function
