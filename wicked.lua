@@ -103,7 +103,7 @@ function helper.bytes_to_string(bytes, sec, padding)
     bytes = tonumber(bytes)
 
     signs = {}
-    signs[1] = 'b'
+    signs[1] = '  b'
     signs[2] = 'KiB'
     signs[3] = 'MiB'
     signs[4] = 'GiB'
