@@ -157,6 +157,20 @@ function helper.splitbywhitespace(str)
 end
 -- }}}
 
+--{{{ Escape a string
+function helper.escape(text)
+    if text then
+        text = text:gsub("&", "&amp;")
+        text = text:gsub("<", "&lt;")
+        text = text:gsub(">", "&gt;")
+        text = text:gsub("'", "&apos;")
+        text = text:gsub("\"", "&quot;")
+    end
+    return text
+end
+
+-- }}}
+
 -- }}}
 
 ---- {{{ Widget types
@@ -176,7 +190,7 @@ function widgets.mpd()
     nowplaying_file:close()
     
     -- Escape
-    nowplaying = awful.escape(nowplaying)
+    nowplaying = helper.escape(nowplaying)
 
     -- Return it
     return {nowplaying}
