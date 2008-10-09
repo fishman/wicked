@@ -374,7 +374,7 @@ function widgets.fs(format, padding)
     for line in f:lines() do
         vars = helper.splitbywhitespace(line)
         
-        if vars[1] ~= 'Filesystem' then
+        if vars[1] ~= 'Filesystem' and #vars == 6 then
             vars[5] = vars[5]:gsub('%%','')
 
             if padding then
