@@ -58,6 +58,45 @@ local cpu_usage = {}
 -- }}}
 
 ---- {{{ Helper functions
+
+----{{{ Log
+function helper.log(var)
+	local log = io.open("/home/fhuizing/rc.log", "a")
+	log:write(os.date("%c\t")..tostring(var).."\n")
+	log:close()
+end
+----}}}
+
+----{{{ Max width
+function helper.max_width(str, width)
+    l = str:len()
+    
+    if l > width then
+        r = math.floor(width/2)
+        a = str:sub(1,r)
+        b = str:sub(l-r, l)
+        str = a .. "..." .. b
+    end
+
+    return str
+end
+----}}}
+
+----{{{ Force a fixed width on a string with spaces
+function helper.fixed_width(str, width)
+    l = str:len()
+    n = width-l
+    if n >= 0 then
+        for i = 1, n do
+            str = str.." "
+        end
+    else
+        str = str:sub(0, l+n)
+    end
+    return str
+end
+----}}}
+
 ---- {{{ Format a string with args
 function helper.format(format, args)
     -- TODO: Find a more efficient way to do this
@@ -197,6 +236,60 @@ function widgets.mpd()
 end
 
 widget_cache[widgets.mpd] = {}
+-- }}}
+
+---- {{{ MOCP widget type
+function widgets.mocp(format, max_width)
+	local playing = ''
+
+    ---- Get data from mocp
+    local info = io.popen('mocp -i')
+    local state = info:read()
+	state = state.gsub(state, 'State: ', '')
+
+	if (state == "PLAY") then
+		local file = info:read()
+		file = file.gsub(file, 'File: ', '')
+		local title = info:read()
+		title = title.gsub(title, 'Title: ', '')
+		local artist = info:read()
+		artist = artist.gsub(artist, 'Artist: ', '')
+		local songtitle = info:read()
+		songtitle = songtitle.gsub(songtitle, 'SongTitle: ', '')
+		local album = info:read()
+		album = album.gsub(album, 'Album: ', '')
+		
+		if (artist:len() == 0) then
+			file = string.reverse(file)
+			i = string.find(file, '/')
+			if (i ~= nil) then
+				file = string.sub(file, 0, i-1)
+			end
+			playing = string.reverse(file)
+		elseif (songtitle:len() == 0) then
+			playing = artist .. ' - ' .. title
+		else
+			playing = artist .. ' - ' .. songtitle
+		end
+	else
+		playing = state
+	end
+
+	-- Close file
+	info:close()
+
+	-- Apply maximum width
+	if (max_width ~= nil) then
+		playing = helper.max_width(playing, max_width)
+	end
+
+	playing = helper.escape(playing)
+
+    -- Return it
+    return {playing}
+end
+
+widget_cache[widgets.mocp] = {}
 -- }}}
 
 ---- {{{ CPU widget type
@@ -590,7 +683,6 @@ function update(widget, reg)
     elseif widget.bar_data_add ~= nil then
         widget:bar_data_add(reg.field, tonumber(data))
     end
-
     return data
 end
 
