@@ -82,6 +82,11 @@ The swap widget type outputs the same values as the memory widget type, about th
 The mpd widget type outputs the song currently playing on the music player daemon, note that the \`mpc` application needs to be installed and configured in order to use this.
 
 
+**wicked.widgets.mocp**
+
+The mocp widget type outputs the song currently playing on the mocp server. Use $1 inside the format string to display the current song. A maxlength can be given to the wicked.register() function which will cut the songname in two when exeeded and displays the first and last part. A typical functioncall looks like this: wicked.register(mocpwidget, \'mocp', \'MOC: $1', 1, nil, 50). Here 50 is the max amount of characters displayed of $1.
+
+
 **wicked.widgets.fs**
 
 The fs widget type can display size and usage information about currently mounted filesystems, use ${mountpoint datatype} inside the format string to display that data, e.g. ${/ avail} displays the free space on the partition mounted on /. Available datatypes are \'used', \'size', \'usep' (Usage in %) and \'avail'.

@@ -259,17 +259,22 @@ function widgets.mocp(format, max_width)
 		local album = info:read()
 		album = album.gsub(album, 'Album: ', '')
 		
-		if (artist:len() == 0) then
+		-- Try artist - (song)title
+		if (artist:len() > 0) then
+			playing = artist .. ' - ' .. (songtitle ~= '' and songtitle or title)
+			
+		-- Else try title or songtitle
+		elseif (artist:len() == 0 and (title:len() > 0 or songtitle:len() > 0)) then
+			playing = (title ~= '' and title or songtitle)
+
+		-- Else use the filename
+		else
 			file = string.reverse(file)
 			i = string.find(file, '/')
 			if (i ~= nil) then
 				file = string.sub(file, 0, i-1)
 			end
 			playing = string.reverse(file)
-		elseif (songtitle:len() == 0) then
-			playing = artist .. ' - ' .. title
-		else
-			playing = artist .. ' - ' .. songtitle
 		end
 	else
 		playing = state
