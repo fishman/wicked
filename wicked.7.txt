@@ -50,6 +50,36 @@ To prevent widgets jumping about your statusbar all the time, you can specify a 
 If the widget type supports it, you can specify a table with different numbers, the first number being the padding for the first value the type would return, the second number for the second value, etc.
 
 
+OTHER FUNCTIONS
+---------------
+
+The following functions are also provided by wicked.
+
+'wicked.unregister(*widget*, *keep*)'
+
+Unregister all updates associated with a widget. Keep is optional (defaults to
+false), and if true, the widget will only be suspended, ready to be
+reactivated by the activate function later.
+
+'wicked.suspend()'
+
+Suspend all widget updates, useful if you are running in low-power mode and
+want to save battery for a while.
+
+'wicked.activate(widget)'
+
+Restarts all widgets that were suspended either from wicked.suspend(), or by
+calling wicked.unregister() with keep=true. Widget is optional, if given, only
+that widget will be activated, defaults to all widgets.
+
+'wicked.regregister(reg)'
+
+wicked.register() and wicked.unregister() both return a reg object, this
+contains information about the widget and the updates that should be sent to
+it, you can pass this reg object into regregister after unregistering it, and
+it will be reregistered (or activated if it was only suspended).
+
+
 WIDGET TYPES
 ------------
 
