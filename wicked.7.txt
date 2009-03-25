@@ -126,6 +126,10 @@ The fs widget type can display size and usage information about currently mounte
 
 The net widget type displays usage information about your networks, in the format string, ${interface type} will be replaced with with that value, possible types are: rx, tx, up, down. You can suffix the type with _b, _kb, _mb or _gb, to display the information in those units. 
 
+**wicked.widgets.uptime**
+
+The uptime widget type displays information about how long your machine has been on (or "up"). Use $1 for the total number of seconds up, $2 for the number of days, $3 for the number of hours, $4 for the number of minutes and $5 for the number of seconds.
+
 
 CUSTOM TYPES
 ------------

@@ -588,6 +588,54 @@ end
 widget_cache[widgets.net] = {}
 -- }}}
 
+---- {{{ Uptime widget type
+function widgets.uptime(format, padding)
+    --Get uptime from /proc/uptime
+	local f = io.open("/proc/uptime")
+	uptime_line = f:read()
+	
+	f:close()
+
+	args = {}
+    --/proc/uptime has the format "<up time> <idle time>"
+  	if uptime_line:find(" ") ~= nil then
+
+		pend = uptime_line:find(" ",0,true)
+                
+        	uptime_line_part = uptime_line:sub(0,pend-1)		
+
+		total_uptime  = math.floor( tonumber(uptime_line_part) )
+
+		uptime_days    =  math.floor( total_uptime / (3600 * 24) )
+		uptime_hours   =  math.floor( ( total_uptime % (3600 * 24) ) / 3600 )
+       	 	uptime_minutes =  math.floor( ( ( total_uptime % (3600 * 24) ) % 3600 ) / 60 )
+        	uptime_seconds =  math.floor( ( ( total_uptime % (3600  * 24) ) % 3600) % 60 )
+
+		if padding then
+			
+			if type(padding) == "table" then
+				total_uptime   = helper.padd(total_uptime   , padding[1])
+				uptime_days    = helper.padd(uptime_days    , padding[2])
+				uptime_hours   = helper.padd(uptime_hours   , padding[3])
+ 				uptime_minutes = helper.padd(uptime_minutes , padding[4])
+				uptime_seconds = helper.padd(uptime_seconds , padding[5])
+			else
+				total_uptime   = helper.padd(total_uptime   , padding)
+				uptime_days    = helper.padd(uptime_days    , padding)
+				uptime_hours   = helper.padd(uptime_hours   , padding)
+				uptime_minutes = helper.padd(uptime_minutes , padding)
+  				uptime_seconds = helper.padd(uptime_seconds , padding)
+			end	
+		
+		end
+	end
+	
+	return {total_uptime, uptime_days, uptime_hours, uptime_minutes, uptime_seconds}
+
+end
+widget_cache[widgets.uptime] = {}
+-- }}}
+
 -- For backwards compatibility: custom function
 widgets["function"] = function ()
     return {}
