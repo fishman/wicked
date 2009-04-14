@@ -324,7 +324,10 @@ function widgets.cpu(format, padding)
 
     for i,v in ipairs(cpu_lines) do
         ---- Calculate totals
-        total_new[i]    = v[2] + v[3] + v[4] + v[5]
+        total_new[i]    = 0
+        for j = 2, #v do
+            total_new[i] = total_new[i] + v[j]
+        end
         active_new[i]   = v[2] + v[3] + v[4]
     
         ---- Calculate percentage
