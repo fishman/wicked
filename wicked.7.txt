@@ -79,6 +79,12 @@ contains information about the widget and the updates that should be sent to
 it, you can pass this reg object into regregister after unregistering it, and
 it will be reregistered (or activated if it was only suspended).
 
+'wicked.enable_caching(widget_type)'
+
+Enable caching of the values returned by a custom widget_type.
+Note that all widget_type functions included in wicked already have caching 
+enabled by default.
+
 
 WIDGET TYPES
 ------------
@@ -156,6 +162,12 @@ wicked.register(mywidget, run_script, "$1", 10)
 
 As you can see, the type function returns a table of values to insert into the format string, the first value in the table will be used in place of $1, the second in place of $2, etc.
 
+If you want to register the same function multiple times, it is a good idea to enable caching so that your function is only called once in each interval.
+To do this call the 'enable_caching' function like so:
+
+--------------------------------------
+wicked.enable_caching(run_script)
+--------------------------------------
 
 FORMAT FUNCTIONS
 ----------------

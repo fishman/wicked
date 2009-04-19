@@ -780,6 +780,14 @@ function activate(widget)
 end
 -- }}}
 
+-- {{{ Enable caching for a widget type
+function enable_caching(widget)
+    if widget_cache[widget] == nil then
+        widget_cache[widget] == {}
+    end
+end
+-- }}}
+
 ---- {{{ Update widget
 function update(widget, reg)
     -- Check if there are any equal widgets
