@@ -783,7 +783,7 @@ end
 -- {{{ Enable caching for a widget type
 function enable_caching(widget)
     if widget_cache[widget] == nil then
-        widget_cache[widget] == {}
+        widget_cache[widget] = {}
     end
 end
 -- }}}
