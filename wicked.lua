@@ -789,7 +789,7 @@ end
 -- }}}
 
 ---- {{{ Update widget
-function update(widget, reg)
+function update(widget, reg, disablecache)
     -- Check if there are any equal widgets
     if reg == nil then
         for w, i in pairs(registered) do
@@ -808,7 +808,9 @@ function update(widget, reg)
 
     -- Check if we have output chached for this widget,
     -- newer than last widget update.
-    if widget_cache[reg.type] ~= nil then
+    if widget_cache[reg.type] ~= nil 
+        and (disablecache == nil or not disablecache)
+    then
         local c = widget_cache[reg.type]
 
         if c.time == nil or c.time <= t-reg.timer then
