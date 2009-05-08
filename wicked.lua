@@ -714,7 +714,9 @@ function regregister(reg)
         end
 
         -- Start timer
-        awful.hooks.timer.register(reg.timer, reg.update)
+        if reg.timer > 0 then
+            awful.hooks.timer.register(reg.timer, reg.update)
+        end
 
         -- Initial update
         reg.update()
