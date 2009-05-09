@@ -797,7 +797,7 @@ function update(widget, reg, disablecache)
         for w, i in pairs(registered) do
             if w == widget then
                 for k,v in pairs(i) do
-                    update(w, v)
+                    update(w, v, disablecache)
                 end
             end
         end
@@ -810,12 +810,10 @@ function update(widget, reg, disablecache)
 
     -- Check if we have output chached for this widget,
     -- newer than last widget update.
-    if widget_cache[reg.type] ~= nil 
-        and (disablecache == nil or not disablecache)
-    then
+    if widget_cache[reg.type] ~= nil then
         local c = widget_cache[reg.type]
 
-        if c.time == nil or c.time <= t-reg.timer then
+        if c.time == nil or c.time <= t-reg.timer or disablecache then
             c.time = t
             c.data = reg.type(reg.format, reg.padd)
         end
