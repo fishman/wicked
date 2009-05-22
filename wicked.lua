@@ -499,7 +499,7 @@ end
 
 ---- {{{ Filesystem widget type
 function widgets.fs(format, padding)
-    local f = io.popen('df -hP')
+    local f = io.popen('df -h')
     local args = {}
 
     for line in f:lines() do
