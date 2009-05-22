@@ -206,6 +206,30 @@ end
 
 ---- {{{ Widget types
 
+---- {{{ iTunes widget type
+function widgets.itunes()
+    ---- Get data from mpc
+    local nowplaying_file = io.popen("osascript -e 'tell application \"iTunes\" to artist of current track & \" - \" & name of current track'")
+    local nowplaying = nowplaying_file:read()
+
+    -- Check that it's not nil
+    if nowplaying == nil then
+        return {''}
+    end
+
+    -- Close the command
+    nowplaying_file:close()
+    
+    -- Escape
+    nowplaying = helper.escape(nowplaying)
+
+    -- Return it
+    return {nowplaying}
+end
+
+widget_cache[widgets.itunes] = {}
+-- }}}
+
 ---- {{{ MPD widget type
 function widgets.mpd()
     ---- Get data from mpc
@@ -360,27 +384,41 @@ widget_cache[widgets.cpu] = {}
 
 ---- {{{ Memory widget type
 function widgets.mem(format, padding)
+    -- get system mem usage
+    local f = io.popen('/usr/sbin/system_profiler SPHardwareDataType')
+    for line in f:lines() do
+        -- line = line.gsub(line, '.', '')
+        line = helper.splitbywhitespace(line)
+
+        if line[1] == 'Memory:' then
+            mem_total = math.floor(line[2]*1024)
+        end
+    end
+    f:close()
+
+
     -- Return MEM usage values
-    local f = io.open('/proc/meminfo')
+    local f = io.popen('/usr/bin/vm_stat')
 
     ---- Get data
     for line in f:lines() do
+        -- line = line.gsub(line, '.', '')
         line = helper.splitbywhitespace(line)
 
-        if line[1] == 'MemTotal:' then
-            mem_total = math.floor(line[2]/1024)
-        elseif line[1] == 'MemFree:' then
-            free = math.floor(line[2]/1024)
-        elseif line[1] == 'Buffers:' then
-            buffers = math.floor(line[2]/1024)
-        elseif line[1] == 'Cached:' then
-            cached = math.floor(line[2]/1024)
+        if line[2] == 'free:' then
+            free = math.floor(line[3]*4/1024)
+        elseif line[2] == 'active:' then
+            active = math.floor(line[3]*4/1024)
+        elseif line[2] == 'inactive:' then
+            inactive = math.floor(line[3]*4/1024)
+        elseif line[3] == 'down:' then
+            wired = math.floor(line[4]*4/1024)
         end
     end
     f:close()
 
     ---- Calculate percentage
-    mem_free=free+buffers+cached
+    mem_free=free
     mem_inuse=mem_total-mem_free
     mem_usepercent = math.floor(mem_inuse/mem_total*100)
 
